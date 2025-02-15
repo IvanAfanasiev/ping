@@ -50,7 +50,7 @@ defmodule Ping.MixProject do
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:heroicons,
-       github: "tailwindlabs/heroicons",
+       git: "http://github.com/tailwindlabs/heroicons.git",
        tag: "v2.1.1",
        sparse: "optimized",
        app: false,
