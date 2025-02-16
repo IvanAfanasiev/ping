@@ -52,6 +52,7 @@ defmodule Ping.MixProject do
       {:heroicons,
        git: "http://github.com/tailwindlabs/heroicons.git",
        tag: "v2.1.1",
+       override: true,
        sparse: "optimized",
        app: false,
        compile: false,
