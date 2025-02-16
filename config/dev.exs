@@ -6,7 +6,8 @@ config :ping, Ping.Repo,
 	hostname: "localhost",
 	database: "ping",
 	show_sensitive_data_on_connection_error: true,
-	pool_size: 10
+	pool_size: 10,
+  socket_options: [:inet6]
 
 config :ping, PingWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
