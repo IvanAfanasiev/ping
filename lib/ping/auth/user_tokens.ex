@@ -2,10 +2,10 @@ defmodule Ping.Auth.UserToken do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key {:id, :binary_id, autogenerate: true}
   schema "user_tokens" do
     field :token, :string
     field :expires_at, :utc_datetime
-    # belongs_to :user, Ping.Accounts.User
     field :user_id, Ecto.UUID
 
   end
