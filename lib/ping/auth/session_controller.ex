@@ -31,11 +31,11 @@ defmodule PingWeb.SessionController do
               |> Ecto.Changeset.change(token: refresh_token, expires_at: expires_at)
               |> Repo.update!()
 
+          end
           conn |> json(%{access_token: access_token, refresh_token: refresh_token})
         else
           conn |> put_status(:unauthorized) |> json(%{error: "Invalid credentials"})
         end
-      end
     end
   end
 
