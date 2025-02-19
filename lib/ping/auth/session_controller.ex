@@ -16,11 +16,21 @@ defmodule PingWeb.SessionController do
         if check_password(user, password) do
           {:ok, access_token, _} = Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {30, :minutes})
           {:ok, refresh_token, _} = Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {7, :days})
-          Repo.insert!(%Ping.Auth.UserToken{
-            user_id: Ecto.UUID.cast!(user.id),
-            token: refresh_token,
-            expires_at: DateTime.add(DateTime.utc_now(), 7 * 24 * 60 * 60, :second)|> DateTime.truncate(:second)
-          })
+
+          expires_at = DateTime.add(DateTime.utc_now(), 7 * 24 * 60 * 60, :second)|> DateTime.truncate(:second)
+
+          case Repo.get_by(UserToken, user_id: user.id) do
+            nil ->
+              Repo.insert!(%Ping.Auth.UserToken{
+              user_id: Ecto.UUID.cast!(user.id),
+              token: refresh_token,
+              expires_at: expires_at
+            })
+            token ->
+              token
+              |> Ecto.Changeset.change(token: refresh_token, expires_at: expires_at)
+              |> Repo.update!()
+
           conn |> json(%{access_token: access_token, refresh_token: refresh_token})
         else
           conn |> put_status(:unauthorized) |> json(%{error: "Invalid credentials"})
@@ -29,7 +39,6 @@ defmodule PingWeb.SessionController do
   end
 
   defp check_password(user, password) do
-    # user.password == password
     Bcrypt.verify_pass(password, user.password)
   end
 
@@ -37,14 +46,20 @@ defmodule PingWeb.SessionController do
     with {:ok, _claims} <- Guardian.decode_and_verify(refresh_token, %{"typ" => "refresh"}),
     %UserToken{} = token <- Repo.get_by(UserToken, token: refresh_token),
     user <- Repo.get(User, token.user_id) do
-      Repo.delete!(token)
+
+      # Repo.delete!(token)
       {:ok, new_access_token, _} = Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {30, :minutes})
       {:ok, new_refresh_token, _} = Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {7, :days})
-      Repo.insert!(%Ping.Auth.UserToken{
-        user_id: user.id,
-        token: new_refresh_token,
-        expires_at: DateTime.add(DateTime.truncate(DateTime.utc_now(), :second), 7 * 24 * 60 * 60, :second)
-      })
+
+      expires_at = DateTime.add(DateTime.utc_now(), 7 * 24 * 60 * 60, :second)|> DateTime.truncate(:second)
+      token
+      |> Ecto.Changeset.change(token: new_refresh_token, expires_at: expires_at)
+      |> Repo.update!()
+      # Repo.insert!(%Ping.Auth.UserToken{
+      #   user_id: user.id,
+      #   token: new_refresh_token,
+      #   expires_at: DateTime.add(DateTime.truncate(DateTime.utc_now(), :second), 7 * 24 * 60 * 60, :second)
+      # })
 
       conn |> json(%{access_token: new_access_token, refresh_token: new_refresh_token})
       else
