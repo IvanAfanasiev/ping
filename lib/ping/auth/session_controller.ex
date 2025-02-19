@@ -35,6 +35,7 @@ defmodule PingWeb.SessionController do
         else
           conn |> put_status(:unauthorized) |> json(%{error: "Invalid credentials"})
         end
+      end
     end
   end
 
